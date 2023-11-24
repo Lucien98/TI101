@@ -19,8 +19,8 @@ def gen_matrix(inv):
 			print(s)
 
 # A More Efficient AES Threshold Implementation
-def gen_gf_mul16(out_name, in_name, sqscl):
-	with open('gf_mul16.txt', 'r', encoding='utf-8') as f:
+def gen_gf_mul16(file_name, out_name, in_name, sqscl):
+	with open(file_name, 'r', encoding='utf-8') as f:
 		for i, ann in enumerate(f.readlines()):
 			line = ann.strip('\n')
 			# print(ann)
@@ -45,6 +45,74 @@ def gen_gf_mul16(out_name, in_name, sqscl):
 						s += ("%s_2[%d] ^ "% (in_name, t0) )
 			s = s[0:-3]
 			s += ";"
+			print(s)
+
+def genvhdl_gf_inv16(file_name, out_name, in_name, sqscl):
+	with open(file_name, 'r', encoding='utf-8') as f:
+		for i, ann in enumerate(f.readlines()):
+			line = ann.strip('\n')
+			# print(ann)
+			terms = line.split(',')
+			s = "%s[%d] = " % (out_name, 3-i) # out[3] = 
+
+			for t in terms[0:-1]:
+				if len(t) == 1 and sqscl == 0: continue
+				if len(t) == 3:
+					t0 = int(t[0])
+					t1 = int(t[1])
+					t2 = int(t[2])
+					t0 = 4 - t0
+					t1 = 4 - t1
+					t2 = 4 - t2
+					s += ("(%s[%d] & %s[%d] & %s[%d])" % (in_name, t0%4, in_name, t1, in_name, t2))
+					s += ' ^ '
+				if len(t) == 2:
+					t0 = int(t[0])
+					t1 = int(t[1])
+					t0 = 4 - t0
+					t1 = 4 - t1
+					s += ("(%s[%d] & %s[%d])" % (in_name, t0%4, in_name, t1))
+					s += ' ^ '
+				if len(t) == 1:
+					t0 = int(t[0])
+					t0 = 4 - t0
+					if t0 >= 4:
+						s += ("%s[%d] ^ "% (in_name, t0%4) )
+					else:
+						s += ("%s[%d] ^ "% (in_name, t0) )
+			s = s[0:-3]
+			s += ";"
+			print(s)
+
+# for re-consolidating fisrt-order masking schemes
+def gen_gf_mul16_abc_big(file_name, sqscl):
+	with open(file_name, 'r', encoding='utf-8') as f:
+		for i, ann in enumerate(f.readlines()):
+			line = ann.strip('\n')
+			# print(ann)
+			terms = line.split(',')
+			s=""
+			# s = "&%s_%d = " % (out_name, 3-i) # out[3] = 
+			if i == 0: s = "&x = "
+			if i == 1: s = "&y = "
+			if i == 2: s = "&z = "
+			if i == 3: s = "&t = "
+
+			for t in terms[0:-1]:
+				if len(t) == 1 and sqscl == 0: continue
+				if len(t) == 2:
+					t0 = int(t[0])
+					t1 = int(t[1])
+					s += ("%s %s" % (chr(t0+96), chr(t1+96)))
+					s += ' + '
+				if len(t) == 1:
+					t0 = int(t[0])
+					if t0 >= 4:
+						s += ("%s + "% ( chr(t0+96)) )
+					else:
+						s += ("%s + "% ( chr(t0+96)) )
+			s = s[0:-3]
+			s += r"\\"
 			print(s)
 
 def gen_gf_mul16_latex(out_name, in_name, sqscl):
@@ -218,7 +286,7 @@ def gen_gf_inv16_x_big(out_name, in_name):
 			print(s)
 
 
-def main():
+def recon_inv():
 	gen_gf_inv16_abc_little("t", "x")
 	print()
 	gen_gf_inv16_abc_big('gf_inv16.txt', "t", "x")
@@ -227,23 +295,34 @@ def main():
 	print()
 	# generate the equation in re-consolidating fisrt-order masking schemes
 	gen_gf_inv16_abc_big('gf_inv16_re-con.txt', "t", "x")
+	gen_gf_mul16_abc_big('gf_sqsclmul16_re-con.txt', 1)
 
-def test():
-	gen_matrix("")
-	print()
-	gen_matrix("i")
-	gen_gf_mul16("assign out","in", 0)
+def test_mul16():
+	gen_gf_mul16('gf_mul16.txt', "assign out","in", 0)
 	print()
 	gen_gf_mul16_latex("t","x", 0)
 	print()
 	gen_gf_mul16_latex("t","x", 1)
 	print()
-	gen_gf_mul16_latex("t","x", 2)
+	gen_gf_mul16_latex("t","x", 2)	
+
+def test():
+	gen_matrix("")
+	print()
+	gen_matrix("i")
 	print()
 	gen_gf_inv16_latex("t","x")
 	print()
-	gen_gf_mul16("assign out","in", 1)
+	gen_gf_mul16('gf_mul16.txt', "assign out","in", 1)
 
+def gen_recon_vhdl():
+	gen_gf_mul16('gf_sqsclmul16_re-con.txt', "assign out","in", 1)
+	print()
+	gen_gf_mul16('gf_mul16_re-con.txt', "assign out","in", 1)
+
+def main():
+	# gen_recon_vhdl()
+	genvhdl_gf_inv16('gf_inv16_re-con.txt', "assign out","in", 1)
 
 if __name__ == '__main__':
 	main()

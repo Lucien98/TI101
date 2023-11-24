@@ -57,7 +57,16 @@
 
 这种对S盒分解的修改是无法通过简单的分析分析出来的，所以我们只能看源代码 [NullFresh](https://github.com/Chair-for-Security-Engineering/NullFresh)<sup><a href="#ref3">[3]</a></sup> 了。
 
-根据
+根据源代码 [NullFresh](https://github.com/Chair-for-Security-Engineering/NullFresh)<sup><a href="#ref3">[3]</a></sup>，可以断定，在文献 <a href="#ref1">[1]</a> 中的表达式中，$a$ 是代表lsb，也就是说它是小端表示。
+
+\[
+	\begin{align*}
+		&x = a + e + a e + b e + c e + a f + d f + a g + c g + b h + d h\\
+		&y = d + h + a e + b e + d e + a f + c f + d f + b g + a h + b h\\
+		&z = a + b + c + d + e + f + g + h + a e + b e + c e + d e + a f + c f + a g + b g + d g + a h + c h + d h\\
+		&t = b + d + f + h + a e + c e + b f + d f + a g + c g + d g + b h + c h\\
+	\end{align*}
+\]
 
 
 
